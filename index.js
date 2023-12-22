@@ -2,7 +2,7 @@ const express = require("express");
 const port = process.env.PORT || 5000;
 const cors = require('cors');
 const app = express();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 
 
@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-    
+
     res.send("Abu Do It!!")
 });
 
@@ -36,21 +36,45 @@ async function run() {
         const tasksCollection = myTasksDB.collection("tasks");
 
         // api for add task 
-        app.post("/tasks", async(req, res) => {
+        app.post("/tasks", async (req, res) => {
             const newTask = req.body
             const result = await tasksCollection.insertOne(newTask);
             res.send(result);
         });
 
         // api for get all tasks 
-        app.get("/tasks", async(req, res) => {
-            const {user} = req.query;
-            const query = {user};
+        app.get("/tasks", async (req, res) => {
+            const { user } = req.query;
+            const query = { user };
             console.log(user);
             const cursor = await tasksCollection.find(query).toArray();
             res.send(cursor);
         });
 
+        // api for delete single task
+        app.delete("/tasks/:id", async (req, res) => {
+            const { id } = req.params;
+            const query = { _id: new ObjectId(id) };
+            const result = await tasksCollection.deleteOne(query);
+            res.send(result);
+        });
+
+
+        // api for update task data 
+        app.patch("/tasks/:id", async (req, res) => {
+            const { id } = req.params;
+            const data = req.body;
+            // console.log(data,"data");
+            // console.log("update data of id", id);
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    ...data
+                },
+            };
+            const result = await tasksCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
 
 
 
